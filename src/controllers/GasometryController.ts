@@ -1,39 +1,45 @@
-import { Request, Response } from 'express';
-import { GasometryService } from '@/services/GasometryService';
-import { IAnalysisRequest } from '@/types/gasometry.types';
+import { Request, Response } from "express";
+import { z } from "zod";
+import { GasometryService } from "@/services/GasometryService";
+
+const analysisRequestSchema = z.object({
+  patientValues: z.object({
+    ph: z.number(),
+    pco2: z.number(),
+    hco3: z.number(),
+  }),
+  referenceValues: z
+    .object({
+      ph: z.number(),
+      pco2: z.number(),
+      hco3: z.number(),
+    })
+    .optional(),
+});
 
 class GasometryController {
   public handle(request: Request, response: Response): Response {
     try {
-      const { patientValues, referenceValues }: IAnalysisRequest = request.body;
+      const validation = analysisRequestSchema.safeParse(request.body);
 
-      if (!patientValues) {
+      if (!validation.success) {
         return response.status(400).json({
-          error: 'Requisição inválida.',
-          details: 'O objeto "patientValues" é obrigatório no corpo da requisição.',
+          error: "Dados de entrada inválidos.",
+          details: validation.error.flatten().fieldErrors,
         });
       }
 
-      const missingFields: string[] = [];
-      if (patientValues.ph === undefined) missingFields.push('ph');
-      if (patientValues.pco2 === undefined) missingFields.push('pco2');
-      if (patientValues.hco3 === undefined) missingFields.push('hco3');
-
-      if (missingFields.length > 0) {
-        return response.status(400).json({
-          error: 'Dados incompletos.',
-          details: `Os seguintes campos são obrigatórios dentro de "patientValues": ${missingFields.join(', ')}.`,
-        });
-      }
+      const { patientValues, referenceValues } = validation.data;
 
       const gasometryService = new GasometryService();
       const result = gasometryService.analyze(patientValues, referenceValues);
 
       return response.status(200).json(result);
-
     } catch (error) {
-      console.error('Erro no GasometryController:', error);
-      return response.status(500).json({ error: 'Ocorreu um erro interno no servidor.' });
+      console.error("Erro no GasometryController:", error);
+      return response
+        .status(500)
+        .json({ error: "Ocorreu um erro interno no servidor." });
     }
   }
 }
