@@ -6,15 +6,23 @@ class GasometryController {
   public handle(request: Request, response: Response): Response {
     try {
       const { patientValues, referenceValues }: IAnalysisRequest = request.body;
-      if (
-        !patientValues ||
-        patientValues.ph === undefined ||
-        patientValues.pco2 === undefined ||
-        patientValues.hco3 === undefined
-      ) {
+
+      if (!patientValues) {
         return response.status(400).json({
-          //TODO: Melhorar a mensagem de erro;
-          error: 'O objeto "patientValues" com as propriedades ph, pco2 e hco3 é obrigatório.',
+          error: 'Requisição inválida.',
+          details: 'O objeto "patientValues" é obrigatório no corpo da requisição.',
+        });
+      }
+
+      const missingFields: string[] = [];
+      if (patientValues.ph === undefined) missingFields.push('ph');
+      if (patientValues.pco2 === undefined) missingFields.push('pco2');
+      if (patientValues.hco3 === undefined) missingFields.push('hco3');
+
+      if (missingFields.length > 0) {
+        return response.status(400).json({
+          error: 'Dados incompletos.',
+          details: `Os seguintes campos são obrigatórios dentro de "patientValues": ${missingFields.join(', ')}.`,
         });
       }
 
