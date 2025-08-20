@@ -1,0 +1,10 @@
+node_modules
+dist
+
+# Arquivos do Git e de ambiente
+.git
+.gitignore
+.env
+
+# Logs
+npm-debug.log*
