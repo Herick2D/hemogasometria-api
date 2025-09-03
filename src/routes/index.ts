@@ -13,5 +13,6 @@ router.get("/", welcomeController.handle);
 
 router.post("/analyze", gasometryController.handle);
 router.get("/download/guide", fileController.downloadGuide);
+router.get("/download/bibliography", fileController.downloadBibliography);
 
 export { router };
